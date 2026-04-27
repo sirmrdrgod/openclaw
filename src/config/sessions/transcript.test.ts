@@ -177,8 +177,8 @@ describe("appendAssistantMessageToSessionTranscript", () => {
       expect(lines.length).toBe(2);
 
       const messageLine = JSON.parse(lines[1]);
-      expect(messageLine.idempotencyKey).toBe("hook-block:test-run");
-      expect(messageLine.message.idempotencyKey).toBeUndefined();
+      expect(messageLine.idempotencyKey).toBeUndefined();
+      expect(messageLine.message.idempotencyKey).toBe("hook-block:test-run");
       expect(messageLine.message.content[0].text).toBe("Blocked by policy.");
       expect(messageLine.originalBlockedContent.content[0].text).toBe("secret prompt");
     }

@@ -340,11 +340,11 @@ export async function appendBlockedUserMessageToSessionTranscript(params: {
     id: messageId,
     parentId,
     timestamp: new Date(nowMs).toISOString(),
-    ...(explicitIdempotencyKey ? { idempotencyKey: explicitIdempotencyKey } : {}),
     message: {
       role: "user",
       content: [{ type: "text", text: params.redactedText }],
       timestamp: nowMs,
+      ...(explicitIdempotencyKey ? { idempotencyKey: explicitIdempotencyKey } : {}),
     },
     originalBlockedContent: {
       content: [{ type: "text", text: params.originalText }],
