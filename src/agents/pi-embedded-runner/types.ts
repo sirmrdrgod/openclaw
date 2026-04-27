@@ -112,6 +112,7 @@ export type EmbeddedPiRunMeta = {
     kind:
       | "context_overflow"
       | "compaction_failure"
+      | "hook_block"
       | "role_ordering"
       | "image_size"
       | "retry_limit";
