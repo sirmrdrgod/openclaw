@@ -147,7 +147,7 @@ describe("appendAssistantMessageToSessionTranscript", () => {
     expect(messageLine.message.content[0].text).toBe("Hello from delivery mirror!");
   });
 
-  it("does not append a duplicate blocked user message for the same top-level idempotency key", async () => {
+  it("does not append a duplicate blocked user message for the same message idempotency key", async () => {
     writeTranscriptStore();
 
     const first = await appendBlockedUserMessageToSessionTranscript({
@@ -181,6 +181,48 @@ describe("appendAssistantMessageToSessionTranscript", () => {
       expect(messageLine.message.idempotencyKey).toBe("hook-block:test-run");
       expect(messageLine.message.content[0].text).toBe("Blocked by policy.");
       expect(messageLine.originalBlockedContent.content[0].text).toBe("secret prompt");
+    }
+  });
+
+  it("deduplicates blocked user messages against legacy top-level idempotency keys", async () => {
+    writeTranscriptStore();
+
+    const sessionFile = resolveSessionTranscriptPathInDir(sessionId, fixture.sessionsDir());
+    fs.mkdirSync(fixture.sessionsDir(), { recursive: true });
+    fs.writeFileSync(
+      sessionFile,
+      [
+        JSON.stringify({ type: "session", id: sessionId }),
+        JSON.stringify({
+          type: "message",
+          id: "legacy-blocked-message",
+          timestamp: new Date().toISOString(),
+          idempotencyKey: "hook-block:legacy",
+          message: {
+            role: "user",
+            content: [{ type: "text", text: "Blocked by old policy." }],
+            timestamp: Date.now(),
+          },
+        }),
+      ].join("\n") + "\n",
+      "utf-8",
+    );
+
+    const result = await appendBlockedUserMessageToSessionTranscript({
+      sessionKey,
+      originalText: "secret prompt",
+      redactedText: "Blocked by policy.",
+      pluginId: "policy-plugin",
+      reason: "contains protected content",
+      idempotencyKey: "hook-block:legacy",
+      storePath: fixture.storePath(),
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.messageId).toBe("legacy-blocked-message");
+      const lines = fs.readFileSync(sessionFile, "utf-8").trim().split("\n");
+      expect(lines.length).toBe(2);
     }
   });
 
